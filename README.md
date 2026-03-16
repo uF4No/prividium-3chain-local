@@ -30,27 +30,70 @@ It is self-contained; no submodules are required for runtime.
 - `jq`
 - Node.js + npm
 
+## Quay Authentication (Required for Prividium Images)
+
+Some Prividium component images are hosted in Quay under Matter Labs private access.
+Before running compose, authenticate to `quay.io` with credentials provided by the MatterLabs team.
+
+```bash
+DOCKER_USERNAME=matterlabs_enterprise+your_username
+DOCKER_PASSWORD=super_secret_provided_by_matterlabs
+
+docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD quay.io
+```
+
 ## Quick Start
 
 From this repo root:
 
 ```bash
 docker compose up -d
+```
+
+## Service URLs
+
+| Chain | Chain ID | RPC URL | User Panel URL | Admin Panel URL |
+|---|---:|---|---|---|
+| Chain 1 (A) | 6565 | `http://localhost:3050` | `http://localhost:3001` | `http://localhost:3000` |
+| Chain 2 (B) | 6566 | `http://localhost:3051` | `http://localhost:3301` | `http://localhost:3300` |
+| Chain 3 (C) | 6567 | `http://localhost:3052` | `http://localhost:3601` | `http://localhost:3600` |
+
+## Default Users
+
+| Scope | Username | Password |
+|---|---|---|
+| Keycloak Admin Console (`http://localhost:5080`) | `admin` | `admin` |
+| Prividium OIDC User | `admin@local.dev` | `password` |
+| Prividium OIDC User | `user1@local.dev` | `password` |
+| Prividium OIDC User | `user2@local.dev` | `password` |
+
+## Validate Setup (Smoke Test)
+
+After startup, validate services, RPC, and L1 registration:
+
+```bash
 ./scripts/smoke-test-3chains.sh
+```
+
+## Run Interop Tests
+
+Run the full ordered-pair interop matrix (A->B, A->C, B->A, B->C, C->A, C->B):
+
+```bash
 ./scripts/run-interop-matrix.sh
 ```
 
-Or one command (smoke by default, interop optional):
+Expected success line:
+
+- `3-chain demo-sdk interop smoke passed (full ordered-pair matrix).`
+
+## One-Command Bootstrap (Optional)
 
 ```bash
 ./scripts/bootstrap.sh
 RUN_INTEROP=1 ./scripts/bootstrap.sh
 REGENERATE_L1_STATE=1 RUN_INTEROP=1 ./scripts/bootstrap.sh
 ```
-
-Expected interop success line:
-
-- `3-chain demo-sdk interop smoke passed (full ordered-pair matrix).`
 
 ## Regenerate 3-Chain L1 State (Optional)
 
