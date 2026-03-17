@@ -1,4 +1,7 @@
-# Prividium 3-Chain Local Stack (v31)
+# Prividium 3-Chain Local Stack
+
+> [!NOTE]
+> This repo uses a custom branch of zksync os server, `sb/interop-type-b-demo`
 
 Standalone local repo to run:
 
