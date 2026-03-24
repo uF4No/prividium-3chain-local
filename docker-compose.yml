@@ -1,7 +1,7 @@
 # Starts L1 (Anvil), 3 L2s (ZKsync OS), and 3 Prividium instances.
 # Run from this repo root: docker compose -f ./docker-compose.yml up
 
-name: zksync-prividium-3chains-fixed
+name: zksync-prividium-3chains
 
 # ═══════════════════════════════════════════════════════════════
 # Shared environment variables for setup/init containers
@@ -37,9 +37,7 @@ x-zksync-os-server: &zksync-os-server
     - host.docker.internal:host-gateway
   volumes:
     - ./local-chains:/app/local-chains
-    - ./chain-configs/chain1.json:/app/local-chains/v31/multiple-chains/chain1.json:ro
-    - ./chain-configs/chain2.json:/app/local-chains/v31/multiple-chains/chain2.json:ro
-    - ./chain-configs/chain3-fixed.json:/app/local-chains/v31/multiple-chains/chain3.json:ro
+    - ./chain-configs:/app/chain-configs:ro
   tmpfs:
     - /app/db:mode=1777
   depends_on:
@@ -183,7 +181,7 @@ services:
       - 8545:8545
     volumes:
       - ./local-chains:/app/local-chains
-      - ./chain-configs/zkos-l1-state-v31-3chains-fixed.json:/app/local-chains/v31/multiple-chains/zkos-l1-state-v31-3chains.json:ro
+      - ./chain-configs:/app/chain-configs:ro
     entrypoint: []
     command:
       [
@@ -191,7 +189,7 @@ services:
         "--host",
         "0.0.0.0",
         "--load-state",
-        "/app/local-chains/v31/multiple-chains/zkos-l1-state-v31-3chains.json",
+        "/app/chain-configs/zkos-l1-state-v31-3chains-fixed.json",
         "--port",
         "8545",
       ]
@@ -211,21 +209,21 @@ services:
     container_name: zkos-chain1
     ports:
       - 3050:3050
-    command: --config ./local-chains/v31/multiple-chains/chain1.json
+    command: --config ./chain-configs/chain1.json
 
   chain2:
     <<: *zksync-os-server
     container_name: zkos-chain2
     ports:
       - 3051:3051
-    command: --config ./local-chains/v31/multiple-chains/chain2.json
+    command: --config ./chain-configs/chain2.json
 
   chain3:
     <<: *zksync-os-server
     container_name: zkos-chain3
     ports:
       - 3052:3052
-    command: --config ./local-chains/v31/multiple-chains/chain3.json
+    command: --config ./chain-configs/chain3-fixed.json
 
   # Waits for all L2 chains to be responsive (setup-tools image has curl)
   wait-for-chains:
