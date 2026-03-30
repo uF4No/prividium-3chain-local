@@ -255,11 +255,11 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Demo User 1 (Lender)
+-- Demo User (Default)
 INSERT INTO users (id, display_name, oidc_sub, source)
 VALUES (
     'u1Xe7K-cDnUzqyJ559R7B',
-    'user1@local.dev',
+    'user@local.dev',
     '00000000-0000-0000-0000-000000000002',
     'oidc'
 )
