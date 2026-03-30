@@ -23,7 +23,7 @@ It is self-contained; no submodules are required for runtime.
 - `scripts/generate-v31-3chain-l1-state.sh`: register chain 6567 into L1 state
 - `scripts/smoke-test-3chains.sh`: service/RPC/L1-registration checks
 - `scripts/run-interop-matrix.sh`: SDK interop test for all ordered pairs
-- `sdk/`: SDK + examples (including `examples/remote-call-3chains.ts`)
+- `sdk/`: SDK + repo-local examples (including `examples/remote-call-3chains.ts`, `examples/message-verify.ts`, and `examples/bundle-transfer.ts`)
 - `ARTIFACTS_SHA256SUMS`: checksums for compose/genesis/chain config artifacts
 
 ## Requirements
@@ -90,6 +90,18 @@ Expected success line:
 
 - `3-chain demo-sdk interop smoke passed (full ordered-pair matrix).`
 
+Additional repo-local SDK examples:
+
+- `sdk/examples/message-verify.ts`: send a message from one chain and verify inclusion on another
+- `sdk/examples/bundle-transfer.ts`: send a token-transfer bundle from one chain to another
+
+From `sdk/`:
+
+```bash
+PRIVATE_KEY=0x... L2_RPC_URL=http://127.0.0.1:3050 L2_RPC_URL_SECOND=http://127.0.0.1:3051 npx ts-node examples/message-verify.ts
+PRIVATE_KEY=0x... L2_RPC_URL=http://127.0.0.1:3050 L2_RPC_URL_SECOND=http://127.0.0.1:3051 npx ts-node examples/bundle-transfer.ts
+```
+
 ## One-Command Bootstrap (Optional)
 
 ```bash
@@ -118,6 +130,7 @@ Defaults:
   Reusing chain2 keys can cause nonce collisions and unstable behavior.
 - Interop relay is configured with all three RPC endpoints.
 - Remote-call interop test contracts in `sdk/examples` are aligned with this stack's interop handler expectations.
+- Invoice smoke helpers are intentionally not documented here because the current local copies depend on contract config outside this repo.
 
 ## Stop / Reset
 
