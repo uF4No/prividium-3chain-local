@@ -250,6 +250,54 @@ services:
         condition: service_started
     restart: "no"
 
+  bundler-l2a:
+    image: quay.io/matterlabs_enterprise/prividium-bundler:v1.164.2
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - ./:/workspace/prividium-3chain-local:ro
+    environment:
+      BUNDLER_PORT: "4337"
+      SEQUENCER_RPC_URL: http://chain1:3050
+      BUNDLER_EXECUTOR_PRIVATE_KEYS: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      BUNDLER_UTILITY_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      BUNDLER_MIN_BALANCE: "0"
+      BUNDLER_NETWORK_NAME: "local-chain-a"
+      BUNDLER_LOG_LEVEL: "info"
+    command:
+      [
+        "sh",
+        "-lc",
+        "eval \"$$(node /workspace/prividium-3chain-local/scripts/aa-runtime-config.cjs a /workspace/prividium-3chain-local/.runtime/aa-contracts.json)\" && exec /app/apps/bundler/node_modules/.bin/alto --entrypoints \"$$ENTRYPOINT\" --executor-private-keys \"$$BUNDLER_EXECUTOR_PRIVATE_KEYS\" --utility-private-key \"$$BUNDLER_UTILITY_PRIVATE_KEY\" --min-balance \"$$BUNDLER_MIN_BALANCE\" --rpc-url \"$$SEQUENCER_RPC_URL\" --port \"$$BUNDLER_PORT\" --network-name \"$$BUNDLER_NETWORK_NAME\" --log-level \"$$BUNDLER_LOG_LEVEL\" --min-entity-stake 0 --min-entity-unstake-delay 0 --safe-mode false --entrypoint-simulation-contract-v8 \"$$ENTRYPOINT_SIMULATION_CONTRACT_V8\" --pimlico-simulation-contract \"$$PIMLICO_SIMULATION_CONTRACT\" --deploy-simulations-contract false --legacy-transactions true",
+      ]
+    depends_on:
+      aa-contracts-deploy:
+        condition: service_completed_successfully
+
+  bundler-l2b:
+    image: quay.io/matterlabs_enterprise/prividium-bundler:v1.164.2
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      - ./:/workspace/prividium-3chain-local:ro
+    environment:
+      BUNDLER_PORT: "4337"
+      SEQUENCER_RPC_URL: http://chain2:3051
+      BUNDLER_EXECUTOR_PRIVATE_KEYS: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      BUNDLER_UTILITY_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      BUNDLER_MIN_BALANCE: "0"
+      BUNDLER_NETWORK_NAME: "local-chain-b"
+      BUNDLER_LOG_LEVEL: "info"
+    command:
+      [
+        "sh",
+        "-lc",
+        "eval \"$$(node /workspace/prividium-3chain-local/scripts/aa-runtime-config.cjs b /workspace/prividium-3chain-local/.runtime/aa-contracts.json)\" && exec /app/apps/bundler/node_modules/.bin/alto --entrypoints \"$$ENTRYPOINT\" --executor-private-keys \"$$BUNDLER_EXECUTOR_PRIVATE_KEYS\" --utility-private-key \"$$BUNDLER_UTILITY_PRIVATE_KEY\" --min-balance \"$$BUNDLER_MIN_BALANCE\" --rpc-url \"$$SEQUENCER_RPC_URL\" --port \"$$BUNDLER_PORT\" --network-name \"$$BUNDLER_NETWORK_NAME\" --log-level \"$$BUNDLER_LOG_LEVEL\" --min-entity-stake 0 --min-entity-unstake-delay 0 --safe-mode false --entrypoint-simulation-contract-v8 \"$$ENTRYPOINT_SIMULATION_CONTRACT_V8\" --pimlico-simulation-contract \"$$PIMLICO_SIMULATION_CONTRACT\" --deploy-simulations-contract false --legacy-transactions true",
+      ]
+    depends_on:
+      aa-contracts-deploy:
+        condition: service_completed_successfully
+
   postgres:
     image: postgres:15
     restart: unless-stopped
@@ -326,6 +374,10 @@ services:
     environment:
       <<: *permissions-api-env
       SEQUENCER_RPC_URL: http://chain1:3050
+      BUNDLER_ENABLED: "true"
+      BUNDLER_RPC_URL: http://bundler-l2a:4337
+      DISPATCHER_SSO_IMPLEMENTATIONS: 0x998abeb3E57409262aE5b751f60747921B33613E
+      DISPATCHER_SSO_BYTECODE_HASHES: 0x77a9210e5f94158c7e8f7e84e9601f427e8c1d5f09dfd434afd16314456b0a0f
       CORS_ORIGIN: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3004
       ADMIN_PANEL_REDIRECT_URLS: http://localhost:3000/callback
       BLOCK_EXPLORER_REDIRECT_URLS: http://localhost:3010/auth/callback
@@ -442,6 +494,10 @@ services:
     environment:
       <<: *permissions-api-env
       SEQUENCER_RPC_URL: http://chain2:3051
+      BUNDLER_ENABLED: "true"
+      BUNDLER_RPC_URL: http://bundler-l2b:4337
+      DISPATCHER_SSO_IMPLEMENTATIONS: 0xc6e7DF5E7b4f2A278906862b61205850344D4e7d
+      DISPATCHER_SSO_BYTECODE_HASHES: 0x0f2baad3a5ff170b1ab4b162870e58287ead31e59b833bef602249ffdc54ec17
       CORS_ORIGIN: http://localhost:3300,http://localhost:3301,http://localhost:3302,http://localhost:3004
       ADMIN_PANEL_REDIRECT_URLS: http://localhost:3300/callback
       BLOCK_EXPLORER_REDIRECT_URLS: http://localhost:3310/auth/callback
@@ -709,6 +765,24 @@ services:
       echo 'Deploying contracts to chain1...' &&
       forge script script/Deploy.s.sol:DeployScript --rpc-url http://chain1:3050 --broadcast --legacy
       "
+    depends_on:
+      deposit:
+        condition: service_completed_successfully
+    restart: "no"
+
+  aa-contracts-deploy:
+    image: quay.io/matterlabs_enterprise/prividium-bundler:v1.164.2
+    platform: linux/amd64
+    entrypoint: ["node", "/workspace/prividium-3chain-local/scripts/deploy-aa-contracts.cjs"]
+    volumes:
+      - ./:/workspace/prividium-3chain-local
+    environment:
+      <<: *setup-env
+      CHAIN_A_ID: "6565"
+      CHAIN_A_RPC_URL: http://chain1:3050
+      CHAIN_B_ID: "6566"
+      CHAIN_B_RPC_URL: http://chain2:3051
+      AA_CONTRACTS_OUTPUT_PATH: /workspace/prividium-3chain-local/.runtime/aa-contracts.json
     depends_on:
       deposit:
         condition: service_completed_successfully
