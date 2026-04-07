@@ -6,3 +6,6 @@ node_modules/
 
 # Docker bind-mount placeholders created at runtime on macOS
 local-chains/v31/multiple-chains/*.json
+
+# Generated AA deployment metadata
+.runtime/

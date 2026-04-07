@@ -67,7 +67,7 @@ docker compose up -d
 |---|---|---|
 | Keycloak Admin Console (`http://localhost:5080`) | `admin` | `admin` |
 | Prividium OIDC User | `admin@local.dev` | `password` |
-| Prividium OIDC User | `user1@local.dev` | `password` |
+| Prividium OIDC User | `user@local.dev` | `password` |
 | Prividium OIDC User | `user2@local.dev` | `password` |
 
 ## Validate Setup (Smoke Test)

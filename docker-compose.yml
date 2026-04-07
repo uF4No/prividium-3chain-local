@@ -264,6 +264,7 @@ services:
       BUNDLER_MIN_BALANCE: "0"
       BUNDLER_NETWORK_NAME: "local-chain-a"
       BUNDLER_LOG_LEVEL: "info"
+      BUNDLER_ENTRYPOINTS: "0x322813fd9a801c5507c9de605d63cea4f2ce6c44"
     command:
       [
         "sh",
@@ -288,6 +289,7 @@ services:
       BUNDLER_MIN_BALANCE: "0"
       BUNDLER_NETWORK_NAME: "local-chain-b"
       BUNDLER_LOG_LEVEL: "info"
+      BUNDLER_ENTRYPOINTS: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
     command:
       [
         "sh",
@@ -376,8 +378,8 @@ services:
       SEQUENCER_RPC_URL: http://chain1:3050
       BUNDLER_ENABLED: "true"
       BUNDLER_RPC_URL: http://bundler-l2a:4337
-      DISPATCHER_SSO_IMPLEMENTATIONS: 0x998abeb3E57409262aE5b751f60747921B33613E
-      DISPATCHER_SSO_BYTECODE_HASHES: 0x77a9210e5f94158c7e8f7e84e9601f427e8c1d5f09dfd434afd16314456b0a0f
+      DISPATCHER_SSO_IMPLEMENTATIONS: 0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f
+      DISPATCHER_SSO_BYTECODE_HASHES: 0x50582cb027a42cdd373c90debcddc998bfade442c9ff3277e86f034b9f38b191
       CORS_ORIGIN: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3004
       ADMIN_PANEL_REDIRECT_URLS: http://localhost:3000/callback
       BLOCK_EXPLORER_REDIRECT_URLS: http://localhost:3010/auth/callback
@@ -496,8 +498,8 @@ services:
       SEQUENCER_RPC_URL: http://chain2:3051
       BUNDLER_ENABLED: "true"
       BUNDLER_RPC_URL: http://bundler-l2b:4337
-      DISPATCHER_SSO_IMPLEMENTATIONS: 0xc6e7DF5E7b4f2A278906862b61205850344D4e7d
-      DISPATCHER_SSO_BYTECODE_HASHES: 0x0f2baad3a5ff170b1ab4b162870e58287ead31e59b833bef602249ffdc54ec17
+      DISPATCHER_SSO_IMPLEMENTATIONS: 0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6
+      DISPATCHER_SSO_BYTECODE_HASHES: 0x2507a83344959ee8998c5bc82f0f77e04c603d6bd69382686ea978eb27c19af6
       CORS_ORIGIN: http://localhost:3300,http://localhost:3301,http://localhost:3302,http://localhost:3004
       ADMIN_PANEL_REDIRECT_URLS: http://localhost:3300/callback
       BLOCK_EXPLORER_REDIRECT_URLS: http://localhost:3310/auth/callback
