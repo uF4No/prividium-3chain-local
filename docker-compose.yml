@@ -494,36 +494,6 @@ services:
       wait-for-chains:
         condition: service_completed_successfully
 
-  bridge-tokens:
-    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
-    platform: linux/amd64
-    working_dir: /workspace/scripts
-    environment:
-      DEPLOYER_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-      USER2_ADDRESS: "0xcFB389324aCf2e0Aad3aC5073166fe428f57fA89"
-      USDC_ADDRESS: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-      TUST_ADDRESS: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-      SGD_ADDRESS: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-      USDC_MINT_AMOUNT: "10000000000"
-      TUST_MINT_AMOUNT: "100000000000000000000"
-      SGD_MINT_AMOUNT: "100000000000000000000"
-    command: >-
-      bash -c "
-      set -e &&
-      echo 'Bridging USDC to chain2...' &&
-      npm run bridge-token -- $$USDC_ADDRESS $$USDC_MINT_AMOUNT $$USER2_ADDRESS $$DEPLOYER_PRIVATE_KEY http://chain1:3050 http://chain2:3051 &&
-      echo 'Bridging TUST to chain2...' &&
-      npm run bridge-token -- $$TUST_ADDRESS $$TUST_MINT_AMOUNT $$USER2_ADDRESS $$DEPLOYER_PRIVATE_KEY http://chain1:3050 http://chain2:3051 &&
-      echo 'Bridging SGD to chain2...' &&
-      npm run bridge-token -- $$SGD_ADDRESS $$SGD_MINT_AMOUNT $$USER2_ADDRESS $$DEPLOYER_PRIVATE_KEY http://chain1:3050 http://chain2:3051
-      "
-    depends_on:
-      mint-tokens:
-        condition: service_completed_successfully
-      interop-relay:
-        condition: service_started
-    restart: "no"
-
   prividium-seed:
     image: ghcr.io/jackhamer09/prividium-setup-tools:latest
     platform: linux/amd64

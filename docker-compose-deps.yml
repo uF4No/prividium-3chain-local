@@ -253,24 +253,6 @@ services:
         condition: service_completed_successfully
     restart: "no"
 
-  contracts-deploy:
-    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
-    platform: linux/amd64
-    working_dir: /workspace/contracts
-    environment:
-      <<: *setup-env
-    command: >-
-      bash -c "
-      export PRIVATE_KEY=$$DEPLOYER_PRIVATE_KEY &&
-      cp -n .env.example .env 2>/dev/null || true &&
-      echo 'Deploying contracts to chain1...' &&
-      forge script script/Deploy.s.sol:DeployScript --rpc-url http://chain1:3050 --broadcast --legacy
-      "
-    depends_on:
-      deposit:
-        condition: service_completed_successfully
-    restart: "no"
-
   aa-contracts-deploy:
     image: quay.io/matterlabs_enterprise/prividium-bundler:v1.164.2
     platform: linux/amd64
@@ -286,28 +268,6 @@ services:
       AA_CONTRACTS_OUTPUT_PATH: /workspace/prividium-3chain-local/.runtime/aa-contracts.json
     depends_on:
       deposit:
-        condition: service_completed_successfully
-    restart: "no"
-
-  mint-tokens:
-    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
-    platform: linux/amd64
-    environment:
-      <<: *setup-env
-    command: >-
-      bash -c "
-      set -e &&
-      echo 'Minting tokens for user1...' &&
-      ./scripts/mint.sh $$USER1_ADDRESS $$USDC_ADDRESS $$USDC_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050 &&
-      ./scripts/mint.sh $$USER1_ADDRESS $$TUST_ADDRESS $$TUST_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050 &&
-      ./scripts/mint.sh $$USER1_ADDRESS $$SGD_ADDRESS $$SGD_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050 &&
-      echo 'Minting tokens for deployer (will be bridged to user2 on Chain 2)...' &&
-      ./scripts/mint.sh $$DEPLOYER_ADDRESS $$USDC_ADDRESS $$USDC_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050 &&
-      ./scripts/mint.sh $$DEPLOYER_ADDRESS $$TUST_ADDRESS $$TUST_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050 &&
-      ./scripts/mint.sh $$DEPLOYER_ADDRESS $$SGD_ADDRESS $$SGD_MINT_AMOUNT $$DEPLOYER_PRIVATE_KEY http://chain1:3050
-      "
-    depends_on:
-      contracts-deploy:
         condition: service_completed_successfully
     restart: "no"
 

@@ -25,6 +25,37 @@ function fail(message) {
   process.exit(1);
 }
 
+function parsePositiveIntEnv(name, fallback) {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    fail(`${name} must be a positive number`);
+  }
+
+  return Math.floor(value);
+}
+
+function parsePositiveBigIntEnv(name, fallback) {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  try {
+    const value = BigInt(raw);
+    if (value <= 0n) {
+      fail(`${name} must be greater than zero`);
+    }
+    return value;
+  } catch (error) {
+    fail(`${name} must be a valid integer`);
+  }
+}
+
 function log(message) {
   console.log(message);
   if (!logFilePath) {
@@ -102,7 +133,55 @@ async function hasCode(publicClient, address) {
   return !!code && code !== '0x';
 }
 
-async function ensureContract(publicClient, walletClient, contractName, bytecode, configuredAddress) {
+async function sleep(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForBalance(publicClient, address, minBalance, timeoutMs, pollIntervalMs) {
+  const deadline = Date.now() + timeoutMs;
+
+  while (true) {
+    const balance = await publicClient.getBalance({ address });
+    if (balance >= minBalance) {
+      return balance;
+    }
+
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `deployer ${address} balance ${balance} below required ${minBalance} after waiting ${timeoutMs}ms`
+      );
+    }
+
+    await sleep(pollIntervalMs);
+  }
+}
+
+async function waitForReceiptWithDiagnostics(publicClient, hash, contractName, receiptTimeoutMs) {
+  try {
+    return await publicClient.waitForTransactionReceipt({
+      hash,
+      timeout: receiptTimeoutMs
+    });
+  } catch (error) {
+    const latestBlockNumber = await publicClient.getBlockNumber().catch(() => null);
+    const transaction = await publicClient.getTransaction({ hash }).catch(() => null);
+    const receipt = await publicClient.getTransactionReceipt({ hash }).catch(() => null);
+    const details = [
+      `${contractName} deploy tx ${hash} was not confirmed within ${receiptTimeoutMs}ms`,
+      latestBlockNumber === null ? 'latestBlock=unavailable' : `latestBlock=${latestBlockNumber.toString()}`,
+      transaction
+        ? `tx.blockNumber=${transaction.blockNumber === null ? 'pending' : transaction.blockNumber.toString()}`
+        : 'tx=not found',
+      receipt
+        ? `receipt.status=${receipt.status} block=${receipt.blockNumber.toString()}`
+        : 'receipt=not found'
+    ].join(', ');
+    error.message = `${details}. ${error.message}`;
+    throw error;
+  }
+}
+
+async function ensureContract(publicClient, walletClient, account, contractName, bytecode, configuredAddress, options) {
   if (configuredAddress && (await hasCode(publicClient, configuredAddress))) {
     return { address: configuredAddress, deployed: false };
   }
@@ -113,13 +192,23 @@ async function ensureContract(publicClient, walletClient, contractName, bytecode
     log(`deploying ${contractName}`);
   }
 
+  const gasPrice = ((await publicClient.getGasPrice()) * BigInt(options.gasPriceMultiplier));
+  const gasLimit = options.deployGasLimit;
   const hash = await walletClient.deployContract({
     abi: EMPTY_CONSTRUCTOR_ABI,
     bytecode,
     args: [],
-    gasPrice: 0n
+    account,
+    gasPrice: gasPrice > 0n ? gasPrice : 1n,
+    gas: gasLimit
   });
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  log(`submitted ${contractName} deploy tx ${hash}`);
+  const receipt = await waitForReceiptWithDiagnostics(
+    publicClient,
+    hash,
+    contractName,
+    options.receiptTimeoutMs
+  );
 
   if (receipt.status !== 'success' || !receipt.contractAddress) {
     throw new Error(`failed to deploy ${contractName} (tx: ${hash})`);
@@ -132,6 +221,14 @@ async function deployChain(chain, privateKey, existingChain, artifacts) {
   log(`Deploying AA support contracts on chain ${chain.label} (${chain.rpcUrl})`);
 
   const account = privateKeyToAccount(privateKey);
+  const options = {
+    balanceWaitMs: parsePositiveIntEnv('AA_DEPLOYER_BALANCE_WAIT_MS', 180000),
+    pollIntervalMs: parsePositiveIntEnv('AA_DEPLOYER_POLL_INTERVAL_MS', 2000),
+    receiptTimeoutMs: parsePositiveIntEnv('AA_DEPLOY_TX_TIMEOUT_MS', 300000),
+    gasPriceMultiplier: parsePositiveIntEnv('AA_DEPLOY_GAS_PRICE_MULTIPLIER', 2),
+    deployGasLimit: parsePositiveBigIntEnv('AA_DEPLOY_GAS_LIMIT', 30000000n),
+    minBalanceWei: parsePositiveBigIntEnv('AA_DEPLOY_MIN_BALANCE_WEI', 1n)
+  };
   const viemChain = defineChain({
     id: chain.id,
     name: `Prividium ${chain.label}`,
@@ -145,27 +242,41 @@ async function deployChain(chain, privateKey, existingChain, artifacts) {
   const transport = http(chain.rpcUrl);
   const publicClient = createPublicClient({ chain: viemChain, transport });
   const walletClient = createWalletClient({ chain: viemChain, transport, account });
+  const fundedBalance = await waitForBalance(
+    publicClient,
+    account.address,
+    options.minBalanceWei,
+    options.balanceWaitMs,
+    options.pollIntervalMs
+  );
+  log(`deployer ${account.address} balance on chain ${chain.label}: ${fundedBalance}`);
 
   const entryPoint = await ensureContract(
     publicClient,
     walletClient,
+    account,
     'EntryPoint',
     artifacts.entryPoint,
-    existingChain?.entryPoint
+    existingChain?.entryPoint,
+    options
   );
   const entryPointSimulationV8 = await ensureContract(
     publicClient,
     walletClient,
+    account,
     'EntryPointSimulations08',
     artifacts.entryPointSimulationV8,
-    existingChain?.entryPointSimulationV8
+    existingChain?.entryPointSimulationV8,
+    options
   );
   const pimlicoSimulation = await ensureContract(
     publicClient,
     walletClient,
+    account,
     'PimlicoSimulations',
     artifacts.pimlicoSimulation,
-    existingChain?.pimlicoSimulation
+    existingChain?.pimlicoSimulation,
+    options
   );
 
   return {
