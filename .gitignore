@@ -3,9 +3,14 @@
 
 sdk/node_modules/
 node_modules/
+**/node_modules/
 
 # Docker bind-mount placeholders created at runtime on macOS
 local-chains/v31/multiple-chains/*.json
 
 # Generated AA deployment metadata
 .runtime/
+era-contracts/l1-contracts/out/
+era-contracts/l1-contracts/cache-forge/
+private-interop/out/
+private-interop/cache-forge/

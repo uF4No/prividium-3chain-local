@@ -1,0 +1,41 @@
+{
+  "name": "private-interop",
+  "version": "1.0.0",
+  "description": "Local private interop workspace for prividium-3chain-local",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "require": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "out",
+    "zkstack-out",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist out cache-forge",
+    "prepare": "npm run build",
+    "deploy:private:local": "ts-node deploy-private-interop-local.ts",
+    "exec:private": "ts-node private-interop-executor.ts",
+    "permissions:private": "ts-node generate-private-interop-permissions.ts",
+    "smoke:private": "ts-node private-interop-smoke.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@ethersproject/abi": "5.7.0",
+    "@openzeppelin/contracts-upgradeable-v4": "npm:@openzeppelin/contracts-upgradeable@4.9.5",
+    "@openzeppelin/contracts-v4": "npm:@openzeppelin/contracts@4.9.5",
+    "ethers": "5.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

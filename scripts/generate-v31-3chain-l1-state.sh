@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 SOURCE_STATE="${1:-$ROOT_DIR/chain-configs/zkos-l1-state-v31-base.json}"
 OUTPUT_STATE="${2:-$ROOT_DIR/chain-configs/zkos-l1-state-v31-3chains-fixed.json}"
-CHAIN3_CONFIG="${3:-$ROOT_DIR/chain-configs/chain3-fixed.json}"
+CHAIN3_CONFIG="${3:-$ROOT_DIR/chain-configs/chain3.json}"
 
 BRIDGEHUB_ADDR="0x78b8b2dbaf2cb50b69a4a0ceee217b926c8520d2"
 BRIDGEHUB_OWNER="0x0A01BB0bA326223f7E7381C76F1D615f25e9b8B4"

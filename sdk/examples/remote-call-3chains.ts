@@ -84,21 +84,21 @@ async function runPair(src: ChainCtx, dst: ChainCtx, sequence: number): Promise<
     .addCall(new CallBuilder(dst.greeter, payload).build())
     .withUnbundler(src.wallet.address);
 
-  console.log(`\n=== ${src.label} -> ${dst.label} ===`);
+  console.log(`\n🔁 === ${src.label} -> ${dst.label} ===`);
   const handle = await sendBundle(src.wallet, bundle);
-  console.log(`sent bundle: ${handle.bundleHash}`);
+  console.log(`📦 sent bundle: ${handle.bundleHash}`);
 
   const finalization = await waitForBundleFinalization(src.provider, handle, {
     pollInterval: POLL_MS,
     timeout: TIMEOUT_MS,
   });
-  console.log(`finalized on source batch: ${finalization.expectedRoot.batchNumber}`);
+  console.log(`🧾 finalized on source batch: ${finalization.expectedRoot.batchNumber}`);
 
   await waitUntilRootAvailable(dst.provider, finalization.expectedRoot, {
     pollInterval: POLL_MS,
     timeout: TIMEOUT_MS,
   });
-  console.log('root available on destination');
+  console.log('🌱 root available on destination');
 
   const expected = `greet ${src.label}->${dst.label} #${sequence}`;
   await waitForMessage({
@@ -108,7 +108,7 @@ async function runPair(src: ChainCtx, dst: ChainCtx, sequence: number): Promise<
     timeoutMs: TIMEOUT_MS,
     pollMs: POLL_MS,
   });
-  console.log(`destination message updated: "${expected}"`);
+  console.log(`✅ destination message updated: "${expected}"`);
 }
 
 async function main() {
@@ -132,6 +132,7 @@ async function main() {
     { label: 'B', provider: b, wallet: new Wallet(pk, b), chainId: bNet.chainId, greeter: '' },
     { label: 'C', provider: c, wallet: new Wallet(pk, c), chainId: cNet.chainId, greeter: '' },
   ];
+  const orderedPairCount = chains.length * (chains.length - 1);
 
   for (const chain of chains) {
     const bal = await chain.provider.getBalance(chain.wallet.address);
@@ -141,12 +142,12 @@ async function main() {
     }
   }
 
-  console.log('\n=== Deploying Greeting contracts ===');
+  console.log('\n💬 === Deploying Greeting contracts ===');
   for (const chain of chains) {
     chain.greeter = await deployGreeter(chain.wallet);
     const contract = new Contract(chain.greeter, GREETING_ABI, chain.provider);
     const msg = (await contract.message()) as string;
-    console.log(`${chain.label} greeter: ${chain.greeter}, message="${msg}"`);
+    console.log(`🏗️ ${chain.label} greeter: ${chain.greeter}, message="${msg}"`);
   }
 
   let seq = 1;
@@ -157,7 +158,8 @@ async function main() {
     }
   }
 
-  console.log('\n3-chain demo-sdk interop smoke passed (full ordered-pair matrix).');
+  console.log('\n✅ 3-chain demo-sdk interop smoke passed (full ordered-pair matrix).');
+  console.log(`📊 Summary: ${chains.length} chains checked, ${chains.length} greeter deployments, ${orderedPairCount} ordered-pair messages.`);
 }
 
 main().catch((err) => {

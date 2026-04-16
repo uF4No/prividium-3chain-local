@@ -2,8 +2,20 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMPOSE_FILE="${COMPOSE_FILE:-$ROOT_DIR/docker-compose.yml}"
-CHAIN3_CONFIG="${CHAIN3_CONFIG:-$ROOT_DIR/chain-configs/chain3-fixed.json}"
+DEFAULT_COMPOSE_FILES="$ROOT_DIR/docker-compose-deps.yml:$ROOT_DIR/docker-compose.yml"
+COMPOSE_FILES="${COMPOSE_FILES:-${COMPOSE_FILE:-$DEFAULT_COMPOSE_FILES}}"
+CHAIN3_CONFIG="${CHAIN3_CONFIG:-$ROOT_DIR/chain-configs/chain3.json}"
+
+compose() {
+  local IFS=':'
+  local -a files=()
+  local -a args=()
+  read -r -a files <<< "$COMPOSE_FILES"
+  for file in "${files[@]}"; do
+    [[ -n "$file" ]] && args+=(-f "$file")
+  done
+  docker compose "${args[@]}" "$@"
+}
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: docker is required"
@@ -35,7 +47,7 @@ fail() {
 
 check_service_running() {
   local service="$1"
-  if docker compose -f "$COMPOSE_FILE" ps --status running --services | grep -qx "$service"; then
+  if compose ps --status running --services | grep -qx "$service"; then
     pass "service '$service' is running"
   else
     fail "service '$service' is not running"

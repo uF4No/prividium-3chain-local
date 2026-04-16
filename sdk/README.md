@@ -1,6 +1,9 @@
-# zkSync Interop SDK
+# ZKsync Interop SDK
 
-A TypeScript SDK for cross-chain interoperability on zkSync Era. This SDK enables sending bundles of transactions across chains, bridging tokens, and verifying cross-chain messages.
+> [!NOTE]
+> This is not an official SDK and it's intended for internal usage and demos only.
+
+A TypeScript SDK for cross-chain interoperability on ZKsync chains. This SDK enables sending bundles of transactions across chains, bridging tokens, and verifying cross-chain messages.
 
 ## Features
 
@@ -12,11 +15,32 @@ A TypeScript SDK for cross-chain interoperability on zkSync Era. This SDK enable
 
 ## Installation
 
-> **Note** it has not yet been published to npm.
+`interop-sdk` is not published to npm. The package name only exists inside this repo.
+
+If your app vendors `prividium-3chain-local` as a git submodule, install the SDK from that local path:
 
 ```bash
-npm install interop-sdk ethers
+npm install ../path/to/prividium-3chain-local/sdk ethers
 ```
+
+Or declare it directly in your app's `package.json`:
+
+```json
+{
+  "dependencies": {
+    "interop-sdk": "file:../path/to/prividium-3chain-local/sdk",
+    "ethers": "^6.0.0"
+  }
+}
+```
+
+Then import from the package name:
+
+```typescript
+import { BundleBuilder, CallBuilder, sendBundle } from 'interop-sdk';
+```
+
+Avoid deep-importing from `sdk/src/...` in an app unless you intentionally want to couple that app to repo internals. Treat `interop-sdk` as a local package boundary instead.
 
 ## Quick Start
 

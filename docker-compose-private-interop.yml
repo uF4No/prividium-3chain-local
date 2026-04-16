@@ -1,0 +1,81 @@
+# Private interop overlay for the public base stack.
+# Run with:
+#   docker compose -f ./docker-compose-deps.yml -f ./docker-compose.yml -f ./docker-compose-private-interop.yml up -d
+
+services:
+  private-interop-setup:
+    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
+    platform: linux/amd64
+    working_dir: /workspace/prividium-3chain-local
+    volumes:
+      - ./:/workspace/prividium-3chain-local
+    environment:
+      CHAIN1_ADMIN_KEY: 0x0c5c4ad877643e7982516fa2a5f985fd35cab53fa0f06a1656f8ee2b7f9e1bbf
+      CHAIN2_ADMIN_KEY: 0xc2f38b0e8f91c466d6ea899e5d9f24443b16f27ecee6dcf4093cb2c0b2f6e2cf
+      CHAIN3_ADMIN_KEY: 0x3e4f7d244f640fb4c402fd1110f3cc8b9cfab5f44415f5d4c6f1abf23381f346
+      PRIVATE_INTEROP_CHAIN_A_CONNECT_RPC_URL: http://chain1:3050
+      PRIVATE_INTEROP_CHAIN_B_CONNECT_RPC_URL: http://chain2:3051
+      PRIVATE_INTEROP_CHAIN_C_CONNECT_RPC_URL: http://chain3:3052
+      PRIVATE_INTEROP_CHAIN_A_RPC_URL: http://127.0.0.1:3050
+      PRIVATE_INTEROP_CHAIN_B_RPC_URL: http://127.0.0.1:3051
+      PRIVATE_INTEROP_CHAIN_C_RPC_URL: http://127.0.0.1:3052
+      PRIVATE_INTEROP_APPLY_PERMISSIONS: "0"
+    command: >-
+      bash -lc "
+      ./setup-private-interop-local
+      "
+    depends_on:
+      wait-for-chains:
+        condition: service_completed_successfully
+      deposit:
+        condition: service_completed_successfully
+    restart: "no"
+
+  private-interop-permissions:
+    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
+    platform: linux/amd64
+    working_dir: /workspace/prividium-3chain-local
+    volumes:
+      - ./:/workspace/prividium-3chain-local
+    environment:
+      PRIVATE_INTEROP_PGHOST: postgres
+      PRIVATE_INTEROP_PGUSER: postgres
+      PRIVATE_INTEROP_PGPASSWORD: postgres
+    command: >-
+      bash -lc "
+      ./scripts/apply-private-interop-permissions.sh
+      "
+    depends_on:
+      private-interop-setup:
+        condition: service_completed_successfully
+      prividium-seed:
+        condition: service_completed_successfully
+      permissions-api-l2a:
+        condition: service_started
+      permissions-api-l2b:
+        condition: service_started
+      permissions-api-l2c:
+        condition: service_started
+    restart: "no"
+
+  private-interop-executor:
+    image: ghcr.io/jackhamer09/prividium-setup-tools:latest
+    platform: linux/amd64
+    working_dir: /workspace/prividium-3chain-local
+    volumes:
+      - ./:/workspace/prividium-3chain-local
+    environment:
+      PRIVATE_INTEROP_USE_CONNECT_RPC: "1"
+      PRIVATE_INTEROP_CHAIN_A_CONNECT_RPC_URL: http://chain1:3050
+      PRIVATE_INTEROP_CHAIN_B_CONNECT_RPC_URL: http://chain2:3051
+      PRIVATE_INTEROP_CHAIN_C_CONNECT_RPC_URL: http://chain3:3052
+    command: >-
+      bash -lc "
+      ./run-private-interop-executor --watch
+      "
+    depends_on:
+      private-interop-setup:
+        condition: service_completed_successfully
+      private-interop-permissions:
+        condition: service_completed_successfully
+    restart: unless-stopped
